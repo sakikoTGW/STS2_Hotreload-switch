@@ -42,24 +42,30 @@ internal static class NativeModUiBridge
         }
     }
 
-    internal static void OnModSettingsCommitted(NModdingScreen? screen)
+    /// <summary>勾选后隐藏「需重启」提示；不触发全量重载（由 <see cref="OnModRowToggled"/> 按行处理）。</summary>
+    internal static void OnModScreenAfterCheckbox(NModdingScreen? screen)
     {
         if (ModManagerReflection.SuppressModDetectedEvent)
             return;
 
+        HidePendingRestartWarning(screen ?? FindModdingScreen());
+    }
+
+    /// <summary>一次性对齐 settings.save 与运行期状态（控制台 modmode / 启动协调等）；勿在每次勾选时调用。</summary>
+    internal static void ReconcileAllModsFromSettingsSave()
+    {
         try
         {
             using (SuppressUiSideEffects())
                 ApplyAllFromSettingsSave();
 
-            HidePendingRestartWarning(screen);
             BaseLibInterop.TryRefreshMainMenuInjection();
             Sts2UiRefreshInterop.ScheduleAfterModListChanged();
-            MainFile.Logger.Info("[热重载] 原生模组界面：已应用勾选状态（无需重启）。");
+            MainFile.Logger.Info("[热重载] 已从 settings.save 对齐全部模组状态。");
         }
         catch (Exception ex)
         {
-            MainFile.Logger.Error($"[热重载] 原生模组界面应用失败: {ex}");
+            MainFile.Logger.Error($"[热重载] 对齐 settings.save 失败: {ex}");
         }
     }
 

@@ -12,7 +12,7 @@ namespace ModHotReload;
 public partial class MainFile : Node
 {
     public const string ModId = "ModHotReload";
-    public const string Version = "1.6.6";
+    public const string Version = "1.6.7";
 
     public static MegaCrit.Sts2.Core.Logging.Logger Logger { get; } = new(ModId, LogType.Generic);
 

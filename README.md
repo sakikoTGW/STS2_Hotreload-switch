@@ -82,6 +82,19 @@ scripts/                      # 安装、部署、集成测试
 
 ## 限制
 
+## 兼容性 / 排错
+
+| 现象 | 原因与处理 |
+|------|------------|
+| 勾选模组时刷屏 `reloadall`、Manosaba `duplicate key` | v1.6.6 及更早会在每次勾选时全量对齐 settings；请升到 **v1.6.7+** |
+| `[BetterModMenu] MissingMethodException … LoadedMods()` | BetterModMenu 与当前游戏版本不匹配；**更新或暂时禁用** BetterModMenu |
+| 日志里 `ModHotReload, Version=1.0.0.0` | 未装全三个 DLL 或仍是旧 zip；用 Release 包并确认含 Core + StartupHook |
+| `DevConsole 注册失败` | 无害；进主菜单后会再注册 |
+
+安装包须含：`ModHotReload.dll`、`ModHotReload.Core.dll`、`ModHotReload.StartupHook.dll`、`ModHotReload.pck`。首次安装运行 `Install.bat` 后**完全退出再进游戏**一次。
+
+## 限制
+
 - **不能**热重载 ModHotReload 自身；改本 mod 后请重启游戏。
 - **战斗中改 DLL**：默认走 SL 管道（保存 → 主菜单 → 重载 → 继续），非边打边换。
 - 已进入 Default ALC 的依赖需重启；Watcher 有 ~1.5s 节流合并。

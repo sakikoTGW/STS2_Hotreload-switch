@@ -17,16 +17,18 @@ internal static class NModMenuRowOnTickboxToggledPatch
     }
 }
 
+/// <summary>
+/// 每次勾选都会走 OnModEnabledOrDisabled；勿在此做全量 ApplyAll（会与 BetterModMenu 等补丁冲突并触发 reloadall 风暴）。
+/// 运行期启停仅由 <see cref="NModMenuRowOnTickboxToggledPatch"/> 处理。
+/// </summary>
 [HarmonyPatch(typeof(NModdingScreen), "OnModEnabledOrDisabled")]
 internal static class NModdingScreenOnModEnabledOrDisabledPatch
 {
     [HarmonyPostfix]
+    [HarmonyPriority(Priority.Last)]
     private static void Postfix(NModdingScreen __instance)
     {
-        if (ModManagerReflection.SuppressModDetectedEvent)
-            return;
-
-        NativeModUiBridge.OnModSettingsCommitted(__instance);
+        NativeModUiBridge.OnModScreenAfterCheckbox(__instance);
     }
 }
 
