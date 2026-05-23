@@ -4,7 +4,10 @@ using ModHotReload.Patches;
 
 namespace ModHotReload.Runtime;
 
-/// <summary>分阶段打补丁：关键路径失败即中止；Godot 等可选补丁失败不拖垮启停/热重载。</summary>
+/// <summary>
+/// 分阶段打补丁：Critical 先于 Optional（相当于固定优先级）。
+/// 与其它 mod 的 Harmony 冲突时，ModHotReload 关键补丁使用 Priority.First / Last 见各类 Patch 特性。
+/// </summary>
 internal static class HarmonyInstaller
 {
     private static int _criticalPatchesApplied;

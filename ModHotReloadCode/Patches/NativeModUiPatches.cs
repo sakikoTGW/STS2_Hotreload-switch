@@ -11,6 +11,7 @@ namespace ModHotReload.Patches;
 internal static class NModMenuRowOnTickboxToggledPatch
 {
     [HarmonyPostfix]
+    [HarmonyPriority(Priority.First)]
     private static void Postfix(NModMenuRow __instance)
     {
         NativeModUiBridge.OnModRowToggled(__instance);

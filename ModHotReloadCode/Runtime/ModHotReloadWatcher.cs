@@ -143,7 +143,8 @@ public partial class ModHotReloadWatcher : Node
             return;
 
         if (!ModHotReloadSettings.Current.FileWatchEnabled
-            || !ModHotReloadSettings.Current.HotReloadEnabled)
+            || !ModHotReloadSettings.Current.HotReloadEnabled
+            || ModSwitchCleanup.IsModeSwitchInProgress)
             return;
 
         string ext = Path.GetExtension(fullPath);

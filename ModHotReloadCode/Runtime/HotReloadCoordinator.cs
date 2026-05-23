@@ -10,7 +10,29 @@ internal static class HotReloadCoordinator
     private static readonly Dictionary<string, long> LastDllTicks = new(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<string, DateTime> LastReloadAttemptUtc = new(StringComparer.OrdinalIgnoreCase);
     private static bool _reloadAllInProgress;
+    private static int _automaticReloadPauseDepth;
     private static readonly Dictionary<string, int> FailCounts = new(StringComparer.OrdinalIgnoreCase);
+
+    internal static bool IsAnyReloadInProgress()
+    {
+        lock (ReloadingModIds)
+            return ReloadingModIds.Count > 0;
+    }
+
+    internal static void PauseAutomaticReload(string reason)
+    {
+        Interlocked.Increment(ref _automaticReloadPauseDepth);
+        MainFile.Logger.Info($"[热重载] 暂停自动重载 ({reason})");
+    }
+
+    internal static void ResumeAutomaticReload(string reason)
+    {
+        if (Interlocked.Decrement(ref _automaticReloadPauseDepth) < 0)
+            Interlocked.Exchange(ref _automaticReloadPauseDepth, 0);
+        MainFile.Logger.Info($"[热重载] 恢复自动重载 ({reason})");
+    }
+
+    private static bool IsAutomaticReloadPaused => Volatile.Read(ref _automaticReloadPauseDepth) > 0;
 
     private static TimeSpan MinReloadInterval =>
         TimeSpan.FromSeconds(ModHotReloadSettings.Current.MinReloadIntervalSeconds);
@@ -124,9 +146,12 @@ internal static class HotReloadCoordinator
         if (string.IsNullOrEmpty(modId))
             return;
 
-        if (!force && !IsAutomaticHotReloadEnabled)
+        if (!force && (!IsAutomaticHotReloadEnabled || IsAutomaticReloadPaused || ModSwitchCleanup.IsModeSwitchInProgress))
         {
-            MainFile.Logger.Info($"[热重载] 已关闭自动热重载（config hotReloadEnabled=false），跳过 {modId}。");
+            if (IsAutomaticReloadPaused || ModSwitchCleanup.IsModeSwitchInProgress)
+                MainFile.Logger.Info($"[热重载] 切档/暂停中，跳过自动重载 {modId}。");
+            else
+                MainFile.Logger.Info($"[热重载] 已关闭自动热重载（config hotReloadEnabled=false），跳过 {modId}。");
             return;
         }
 
@@ -243,7 +268,10 @@ internal static class HotReloadCoordinator
     /// <summary>文件变更时：先同步到外置暂存，再触发重载逻辑。</summary>
     internal static void OnLiveFileChanged(string modFolder, string triggerPath, ReloadChangeKind kind)
     {
-        if (!IsAutomaticHotReloadEnabled || !ModHotReloadSettings.Current.FileWatchEnabled)
+        if (!IsAutomaticHotReloadEnabled
+            || !ModHotReloadSettings.Current.FileWatchEnabled
+            || IsAutomaticReloadPaused
+            || ModSwitchCleanup.IsModeSwitchInProgress)
             return;
 
         Mod? mod = FindModByFolder(modFolder);

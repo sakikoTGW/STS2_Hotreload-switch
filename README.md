@@ -99,6 +99,19 @@ scripts/                      # 安装、部署、集成测试
 - **战斗中改 DLL**：默认走 SL 管道（保存 → 主菜单 → 重载 → 继续），非边打边换。
 - 已进入 Default ALC 的依赖需重启；Watcher 有 ~1.5s 节流合并。
 
+## 切档 / 模式切换（v1.6.9+）
+
+`modmode on|off` 或 Vanilla/Modded 存档切换时会：
+
+1. **等待** pending 重载队列与进行中的 reload 收尾（`WaitForQuiescence`）
+2. **快照** 当前已加载 mod 列表 → `%LOCALAPPDATA%\STS2_ModHotReload\switch-snapshot.json`
+3. 失败则 **按快照回滚** 启停状态
+4. 关闭 mod 时：`OnModUnload` / `OnDisable` / `DisposeMod` / `Unregister` 静态钩子（若 mod 提供）+ 清理 `%LOCALAPPDATA%\STS2_ModHotReload\mods\{ModId}\cache\`
+
+Mod 持久化数据请放在 `res://{ModId}/` 或上述 cache 目录；`%APPDATA%\SlayTheSpire2\{ModId}\` **不会自动删除**（仅日志提示）。
+
+Harmony 与其它 mod：关键 UI/加载补丁优先打；冲突时请更新 BetterModMenu 等依赖旧 API 的 mod。
+
 ## 外置配置（v1.6.8+）
 
 首次运行会在 `%LOCALAPPDATA%\STS2_ModHotReload\config.json` 生成默认配置。模板见仓库根目录 `config.example.json`。

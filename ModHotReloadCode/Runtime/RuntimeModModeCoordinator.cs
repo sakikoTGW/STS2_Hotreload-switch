@@ -40,6 +40,46 @@ internal static class RuntimeModModeCoordinator
         CurrentMode = mode;
     }
 
+    internal static void RollbackFromSnapshot(ModSwitchCleanup.ModSwitchSnapshot snapshot)
+    {
+        try
+        {
+            if (!Enum.TryParse<RuntimeModMode>(snapshot.Mode, true, out RuntimeModMode mode))
+                return;
+
+            CurrentMode = mode;
+            PersistMode(mode);
+
+            foreach (ModSwitchCleanup.ModSwitchSnapshot.Entry entry in snapshot.Mods)
+            {
+                Mod? mod = ModManager.Mods.FirstOrDefault(m =>
+                    string.Equals(m.manifest?.id, entry.Id, StringComparison.OrdinalIgnoreCase));
+                if (mod == null)
+                    continue;
+
+                try
+                {
+                    ModLifecycleCoordinator.ApplyEnabledState(
+                        mod,
+                        entry.Enabled,
+                        persistSettings: false,
+                        reason: "switch-rollback",
+                        refreshIfAlreadyLoaded: false);
+                }
+                catch (Exception ex)
+                {
+                    MainFile.Logger.Warn($"[热重载] 回滚 {entry.Id} 失败: {ex.Message}");
+                }
+            }
+
+            Sts2UiRefreshInterop.ScheduleAfterModListChanged();
+        }
+        catch (Exception ex)
+        {
+            MainFile.Logger.Error($"[热重载] 切档回滚异常: {ex}");
+        }
+    }
+
     internal static async Task SwitchAsync(RuntimeModMode target, bool continueAfterSwitch)
     {
         if (Interlocked.CompareExchange(ref _switching, 1, 0) != 0)
@@ -48,8 +88,14 @@ internal static class RuntimeModModeCoordinator
             return;
         }
 
+        ModSwitchCleanup.BeginModeSwitch();
+        ModSwitchCleanup.ModSwitchSnapshot snapshot = ModSwitchCleanup.TakeSnapshot();
+        RuntimeModMode previousMode = CurrentMode;
+
         try
         {
+            await ModSwitchCleanup.WaitForQuiescenceAsync();
+
             MainFile.Logger.Info($"[热重载] 模式切换 >>> {CurrentMode} -> {target}");
 
             bool hadRun = Sts2RunInterop.GetCurrentRoom() != null;
@@ -77,14 +123,19 @@ internal static class RuntimeModModeCoordinator
                 await Sts2RunInterop.ContinueSavedRunAsync();
             }
 
+            ModSwitchCleanup.CommitSnapshot();
             MainFile.Logger.Info($"[热重载] 模式切换 <<< {Status}");
         }
         catch (Exception ex)
         {
             MainFile.Logger.Error($"[热重载] 模式切换失败: {ex}");
+            CurrentMode = previousMode;
+            PersistMode(previousMode);
+            RestoreFromSnapshot(snapshot);
         }
         finally
         {
+            ModSwitchCleanup.EndModeSwitch();
             Interlocked.Exchange(ref _switching, 0);
         }
     }
@@ -114,6 +165,8 @@ internal static class RuntimeModModeCoordinator
             mod.errors = null;
             if (oldAssembly != null)
                 OfficialModLoader.UnloadAssemblyContext(modId);
+
+            ModSwitchCleanup.TeardownMod(modId, oldAssembly);
 
             if (persistSettings)
                 ModManagerReflection.SetModEnabled(mod, false);
@@ -190,6 +243,41 @@ internal static class RuntimeModModeCoordinator
 
     internal static bool IsRunningModded() =>
         !IsVanillaMode && GetActiveGameplayMods().Count > 0;
+
+    internal static void RestoreFromSnapshot(ModSwitchCleanup.ModSwitchSnapshot snapshot)
+    {
+        MainFile.Logger.Warn($"[热重载] 按快照恢复 mod 状态（{snapshot.Mods.Count} 条）…");
+
+        if (IsVanillaMode)
+        {
+            DisableAllContentMods(persistSettings: false);
+            return;
+        }
+
+        foreach (ModSwitchCleanup.ModSwitchSnapshot.Entry entry in snapshot.Mods)
+        {
+            Mod? mod = ModManager.Mods.FirstOrDefault(m =>
+                string.Equals(m.manifest?.id, entry.Id, StringComparison.OrdinalIgnoreCase));
+            if (mod == null)
+                continue;
+
+            try
+            {
+                ModLifecycleCoordinator.ApplyEnabledState(
+                    mod,
+                    entry.Enabled,
+                    persistSettings: false,
+                    reason: "switch-rollback",
+                    refreshIfAlreadyLoaded: false);
+            }
+            catch (Exception ex)
+            {
+                MainFile.Logger.Warn($"[热重载] 回滚 {entry.Id} 失败: {ex.Message}");
+            }
+        }
+
+        Sts2UiRefreshInterop.ScheduleAfterModListChanged();
+    }
 
     private static void DisableAllContentMods(bool persistSettings)
     {
