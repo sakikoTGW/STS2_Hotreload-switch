@@ -12,7 +12,7 @@ namespace ModHotReload;
 public partial class MainFile : Node
 {
     public const string ModId = "ModHotReload";
-    public const string Version = "1.6.7";
+    public const string Version = "1.6.8";
 
     public static MegaCrit.Sts2.Core.Logging.Logger Logger { get; } = new(ModId, LogType.Generic);
 
@@ -57,8 +57,10 @@ public partial class MainFile : Node
         Logger.Info("通用：mods 下任意已加载 mod；ModelDb 全量清理；依赖级联；外置暂存。");
         Logger.Info("战斗中：PCK/图即时；DLL 默认 SL 模式（保存→主菜单→重载→继续）。");
         Logger.Info("可选：STS2_MODHOTRELOAD_COMBAT_DEFER=1 战后排队；combat-sl-off.flag 关闭 SL。");
-        Logger.Info("模组界面：勾选即时启停；取消再勾选会完整重载；控制台 reload/reloadall/modon/modoff。");
-        Logger.Info("ALC：mod DLL 仅 collectible；启动钩子见 scripts/install-startup-hook.ps1");
+        Logger.Info("模组界面：勾选即时启停；控制台 reload/reloadall/hotreload/modon/modoff。");
+        Logger.Info($"[热重载] 配置: {ModHotReloadSettings.ConfigPath}");
+        Logger.Info($"[热重载] {ModHotReloadSettings.Current.Describe()}");
+        Logger.Info("ALC：mod DLL 仅 collectible；首次安装见 Install.bat + config.example.json");
     }
 
     private static void TryStartWatcher()

@@ -10,7 +10,13 @@ internal static class HotReloadCoordinator
     private static readonly Dictionary<string, long> LastDllTicks = new(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<string, DateTime> LastReloadAttemptUtc = new(StringComparer.OrdinalIgnoreCase);
     private static bool _reloadAllInProgress;
-    private static readonly TimeSpan MinReloadInterval = TimeSpan.FromSeconds(1.5);
+    private static readonly Dictionary<string, int> FailCounts = new(StringComparer.OrdinalIgnoreCase);
+
+    private static TimeSpan MinReloadInterval =>
+        TimeSpan.FromSeconds(ModHotReloadSettings.Current.MinReloadIntervalSeconds);
+
+    internal static bool IsAutomaticHotReloadEnabled =>
+        ModHotReloadSettings.Current.HotReloadEnabled;
 
     internal static bool IsReloading(string modId) => ReloadingModIds.Contains(modId);
 
@@ -73,7 +79,16 @@ internal static class HotReloadCoordinator
         try
         {
             foreach (string id in ids)
-                ReloadByFolderName(id, ReloadChangeKind.DllOrJson, force: true);
+            {
+                try
+                {
+                    ReloadByFolderName(id, ReloadChangeKind.DllOrJson, force: true);
+                }
+                catch (Exception ex)
+                {
+                    MainFile.Logger.Error($"[热重载] reloadall 跳过 {id}（不影响其它 mod）: {ex.Message}");
+                }
+            }
         }
         finally
         {
@@ -81,11 +96,39 @@ internal static class HotReloadCoordinator
         }
     }
 
+    internal static void NotifyReloadFailed(string modId, ReloadChangeKind kind)
+    {
+        int fails = FailCounts.TryGetValue(modId, out int n) ? n + 1 : 1;
+        FailCounts[modId] = fails;
+
+        var settings = ModHotReloadSettings.Current;
+        if (fails >= settings.MaxReloadRetries)
+        {
+            MainFile.Logger.Error(
+                $"[热重载] {modId} 已达最大重试 {settings.MaxReloadRetries} 次，请检查 mod 日志后手动 reload。");
+            FailCounts.Remove(modId);
+            return;
+        }
+
+        ModStagingStore.MarkPending(modId, kind);
+        GameSafetyGuard.ScheduleRetry(modId, settings.RetryBackoffSeconds);
+        MainFile.Logger.Warn(
+            $"[热重载] {modId} 失败 ({fails}/{settings.MaxReloadRetries})，已排队重试。");
+    }
+
+    private static void NotifyReloadSucceeded(string modId) => FailCounts.Remove(modId);
+
     internal static void Reload(Mod mod, ReloadChangeKind kind = ReloadChangeKind.DllOrJson, bool force = false)
     {
         string? modId = mod.manifest?.id;
         if (string.IsNullOrEmpty(modId))
             return;
+
+        if (!force && !IsAutomaticHotReloadEnabled)
+        {
+            MainFile.Logger.Info($"[热重载] 已关闭自动热重载（config hotReloadEnabled=false），跳过 {modId}。");
+            return;
+        }
 
         if (string.Equals(modId, MainFile.ModId, StringComparison.OrdinalIgnoreCase))
         {
@@ -160,12 +203,13 @@ internal static class HotReloadCoordinator
 
             if (success)
             {
+                NotifyReloadSucceeded(modId);
                 ModStagingStore.ClearPending(modId);
                 if (string.Equals(modId, "Rien", StringComparison.OrdinalIgnoreCase))
                     RienRuntimeCriticalFixes.Install(MainFile.Logger, mod.assembly);
             }
             else
-                MainFile.Logger.Warn($"[热重载] {modId} 未成功，保留 pending（若有）以便稍后重试。");
+                NotifyReloadFailed(modId, kind);
 
             if (success && kind != ReloadChangeKind.PckOnly && GameSafetyGuard.IsInCombat)
                 CombatReloadInterop.AfterModReloadInCombat(mod);
@@ -186,7 +230,8 @@ internal static class HotReloadCoordinator
         }
         catch (Exception ex)
         {
-            MainFile.Logger.Error($"[热重载] {modId} 异常: {ex}");
+            MainFile.Logger.Error($"[热重载] {modId} 异常（其它 mod 不受影响）: {ex}");
+            NotifyReloadFailed(modId, kind);
         }
         finally
         {
@@ -198,6 +243,9 @@ internal static class HotReloadCoordinator
     /// <summary>文件变更时：先同步到外置暂存，再触发重载逻辑。</summary>
     internal static void OnLiveFileChanged(string modFolder, string triggerPath, ReloadChangeKind kind)
     {
+        if (!IsAutomaticHotReloadEnabled || !ModHotReloadSettings.Current.FileWatchEnabled)
+            return;
+
         Mod? mod = FindModByFolder(modFolder);
         if (mod?.manifest?.id == null)
         {

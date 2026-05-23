@@ -145,14 +145,13 @@ internal static class GameSafetyGuard
 
         HotReloadCoordinator.Reload(mod, ReloadChangeKind.DllOrJson, force);
         if (mod.state == ModLoadState.Loaded)
-        {
             NextRetryUtc.Remove(entry.ModId);
-            return;
-        }
+    }
 
-        // 失败退避：避免每帧重复 full reload 把 FPS 拉到个位数。
-        DateTime retryAt = DateTime.UtcNow.AddSeconds(4);
-        NextRetryUtc[entry.ModId] = retryAt;
-        MainFile.Logger.Warn($"[热重载] {entry.ModId} 重载未成功，退避到 {retryAt:HH:mm:ss} 再重试。");
+    internal static void ScheduleRetry(string modId, double backoffSeconds)
+    {
+        DateTime retryAt = DateTime.UtcNow.AddSeconds(backoffSeconds);
+        NextRetryUtc[modId] = retryAt;
+        MainFile.Logger.Warn($"[热重载] {modId} 退避到 {retryAt:HH:mm:ss} 再重试。");
     }
 }

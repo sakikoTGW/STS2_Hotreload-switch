@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "hotReloadEnabled": true,
+  "fileWatchEnabled": true,
+  "debounceSeconds": 2.4,
+  "minReloadIntervalSeconds": 1.5,
+  "maxReloadRetries": 3,
+  "retryBackoffSeconds": 4.0,
+  "duplicateEventWindowMs": 900
+}

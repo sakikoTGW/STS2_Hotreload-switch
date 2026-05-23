@@ -99,6 +99,22 @@ scripts/                      # 安装、部署、集成测试
 - **战斗中改 DLL**：默认走 SL 管道（保存 → 主菜单 → 重载 → 继续），非边打边换。
 - 已进入 Default ALC 的依赖需重启；Watcher 有 ~1.5s 节流合并。
 
+## 外置配置（v1.6.8+）
+
+首次运行会在 `%LOCALAPPDATA%\STS2_ModHotReload\config.json` 生成默认配置。模板见仓库根目录 `config.example.json`。
+
+| 字段 | 含义 |
+|------|------|
+| `schemaVersion` | 配置结构版本（兼容用） |
+| `hotReloadEnabled` | 自动热重载总开关 |
+| `fileWatchEnabled` | 是否监视 mods 目录 |
+| `debounceSeconds` | 文件变更去抖（秒） |
+| `minReloadIntervalSeconds` | 同一 mod 最短重载间隔 |
+| `maxReloadRetries` | 单 mod 失败最大自动重试次数 |
+| `retryBackoffSeconds` | 重试退避间隔 |
+
+控制台：`hotreload on` / `hotreload off` / `hotreload status` / `hotreload reload-config`
+
 ## 脚本参考
 
 | 脚本 | 用途 |

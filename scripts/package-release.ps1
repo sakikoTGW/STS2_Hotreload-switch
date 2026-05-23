@@ -35,8 +35,12 @@ $include = @(
     "Install.bat",
     "sts2-launch.cmd"
 )
+$exampleConfig = Join-Path $root "config.example.json"
 foreach ($f in $include) {
     Copy-Item (Join-Path $deploy $f) $stage -Force
+}
+if (Test-Path $exampleConfig) {
+    Copy-Item $exampleConfig $stage -Force
 }
 
 $installTxt = @"

@@ -85,7 +85,15 @@ internal static class NativeModUiBridge
                 continue;
 
             bool enabled = desired.TryGetValue((mod.manifest.id.ToLowerInvariant(), mod.modSource), out bool v) && v;
-            ModLifecycleCoordinator.ApplyEnabledState(mod, enabled, persistSettings: false, reason: "应用设置");
+            try
+            {
+                ModLifecycleCoordinator.ApplyEnabledState(mod, enabled, persistSettings: false, reason: "应用设置");
+            }
+            catch (Exception ex)
+            {
+                MainFile.Logger.Error(
+                    $"[热重载] 对齐 {mod.manifest.id} 失败（继续其它 mod）: {ex.Message}");
+            }
         }
 
         bool anyGameplay = ModManager.Mods.Any(m =>

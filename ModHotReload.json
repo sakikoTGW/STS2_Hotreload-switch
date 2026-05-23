@@ -3,7 +3,7 @@
   "name": "Mod Hot Reload",
   "author": "STS2-HotReload",
   "description": "通用热重载。放入 mods/ModHotReload 后从 Steam 正常启动；首次运行会自动配置，无需改启动项。",
-  "version": "1.6.7",
+  "version": "1.6.8",
   "has_pck": true,
   "has_dll": true,
   "dependencies": [],

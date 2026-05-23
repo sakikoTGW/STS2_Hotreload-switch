@@ -109,6 +109,47 @@ internal sealed class ModOnConsoleCmd : AbstractConsoleCmd
     }
 }
 
+internal sealed class HotReloadToggleConsoleCmd : AbstractConsoleCmd
+{
+    public override string CmdName => "hotreload";
+
+    public override string Args => "on|off|status|reload-config";
+
+    public override string Description => "热重载总开关 / 重读 config.json";
+
+    public override bool IsNetworked => false;
+
+    public override CmdResult Process(Player issuingPlayer, string[] args)
+    {
+        string action = args.Length == 0 ? "status" : args[0].Trim().ToLowerInvariant();
+        var settings = ModHotReloadSettings.Current;
+
+        switch (action)
+        {
+            case "on":
+            case "enable":
+                settings.HotReloadEnabled = true;
+                settings.FileWatchEnabled = true;
+                ModHotReloadSettings.Save(settings);
+                return new CmdResult(true, "热重载已开启（监视 + 自动重载）。");
+            case "off":
+            case "disable":
+                settings.HotReloadEnabled = false;
+                ModHotReloadSettings.Save(settings);
+                return new CmdResult(true, "热重载已关闭（仍可用 reload / modon / modoff）。");
+            case "reload-config":
+            case "config":
+                ModHotReloadSettings.Reload();
+                return new CmdResult(true,
+                    $"{ModHotReloadSettings.ConfigPath}\n{ModHotReloadSettings.Current.Describe()}");
+            case "status":
+            default:
+                return new CmdResult(true,
+                    $"{settings.Describe()}\nconfig: {ModHotReloadSettings.ConfigPath}");
+        }
+    }
+}
+
 internal sealed class ModOffConsoleCmd : AbstractConsoleCmd
 {
     public override string CmdName => "modoff";

@@ -7,8 +7,10 @@ namespace ModHotReload.Runtime;
 /// <summary>监视 mods 目录；在 Godot 主线程去抖、等文件稳定后再重载。</summary>
 public partial class ModHotReloadWatcher : Node
 {
-    private const double DebounceSeconds = 2.4;
-    private static readonly TimeSpan DuplicateEventWindow = TimeSpan.FromMilliseconds(900);
+    private static double DebounceSeconds => ModHotReloadSettings.Current.DebounceSeconds;
+
+    private static TimeSpan DuplicateEventWindow =>
+        TimeSpan.FromMilliseconds(ModHotReloadSettings.Current.DuplicateEventWindowMs);
 
     private static readonly HashSet<string> WatchedExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -138,6 +140,10 @@ public partial class ModHotReloadWatcher : Node
     private void Enqueue(string fullPath)
     {
         if (string.IsNullOrEmpty(_modsRoot))
+            return;
+
+        if (!ModHotReloadSettings.Current.FileWatchEnabled
+            || !ModHotReloadSettings.Current.HotReloadEnabled)
             return;
 
         string ext = Path.GetExtension(fullPath);

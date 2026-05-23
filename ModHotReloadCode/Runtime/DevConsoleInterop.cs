@@ -38,8 +38,10 @@ internal static class DevConsoleInterop
             RegisterCommand(devConsole, new ModModeConsoleCmd());
             RegisterCommand(devConsole, new ModOnConsoleCmd());
             RegisterCommand(devConsole, new ModOffConsoleCmd());
+            RegisterCommand(devConsole, new HotReloadToggleConsoleCmd());
             _registered = true;
-            MainFile.Logger.Info("[热重载] 官方 DevConsole: reload / reloadall / modmode / modon / modoff 已注册");
+            MainFile.Logger.Info(
+                "[热重载] DevConsole: reload / reloadall / hotreload / modmode / modon / modoff");
             return true;
         }
         catch (Exception ex)
