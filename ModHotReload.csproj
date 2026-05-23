@@ -30,6 +30,7 @@
         <Compile Remove="ModHotReload.Core/**"/>
         <Compile Remove="ModHotReload.StartupHook/**"/>
         <Compile Remove="_probe/**"/>
+        <Compile Remove="tools/**"/>
         <None Include="ModHotReload/**"/>
         <None Include="ModHotReload.Core/**"/>
         <None Include="ModHotReload.StartupHook/**"/>

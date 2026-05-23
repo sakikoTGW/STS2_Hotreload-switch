@@ -8,6 +8,39 @@ namespace ModHotReload.Runtime;
 /// <summary>关闭/开启 mod 后刷新仍停留在选角等界面上的 UI。</summary>
 internal static class Sts2UiRefreshInterop
 {
+    private static int _refreshScheduled;
+
+    /// <summary>合并多次启停/重载触发的刷新，并在下一帧 PCK 重挂完成后再刷新 UI。</summary>
+    internal static void ScheduleAfterModListChanged()
+    {
+        if (Interlocked.CompareExchange(ref _refreshScheduled, 1, 0) != 0)
+            return;
+
+        if (Engine.GetMainLoop() is not SceneTree tree)
+        {
+            Interlocked.Exchange(ref _refreshScheduled, 0);
+            AfterModListChanged();
+            return;
+        }
+
+        void OnFrame()
+        {
+            tree.ProcessFrame -= OnFrame;
+            Interlocked.Exchange(ref _refreshScheduled, 0);
+            try
+            {
+                GodotResourceInterop.RemountAllLoadedPcks();
+                AfterModListChanged();
+            }
+            catch (Exception ex)
+            {
+                MainFile.Logger.Warn($"[热重载] 延迟 UI 刷新失败: {ex.Message}");
+            }
+        }
+
+        tree.ProcessFrame += OnFrame;
+    }
+
     internal static void AfterModListChanged()
     {
         RefreshMainMenuButtons();
@@ -49,8 +82,15 @@ internal static class Sts2UiRefreshInterop
             MethodInfo? init = typeof(NCharacterSelectScreen).GetMethod(
                 "InitCharacterButtons",
                 BindingFlags.Instance | BindingFlags.NonPublic);
-            init?.Invoke(screen, null);
+            if (init == null)
+                return;
+
+            init.Invoke(screen, null);
             MainFile.Logger.Info("[热重载] 已刷新选角界面（InitCharacterButtons）。");
+        }
+        catch (TargetInvocationException ex) when (ex.InnerException != null)
+        {
+            MainFile.Logger.Warn($"[热重载] 刷新选角界面失败: {ex.InnerException.Message}");
         }
         catch (Exception ex)
         {

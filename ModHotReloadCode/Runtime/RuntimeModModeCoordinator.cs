@@ -118,7 +118,7 @@ internal static class RuntimeModModeCoordinator
             if (persistSettings)
                 ModManagerReflection.SetModEnabled(mod, false);
 
-            Sts2UiRefreshInterop.AfterModListChanged();
+            Sts2UiRefreshInterop.ScheduleAfterModListChanged();
             MainFile.Logger.Info($"[热重载] 已关闭 mod: {modId}（ModelDb/Harmony/PCK/选角 UI 已更新）");
         }
         catch (Exception ex)
@@ -165,7 +165,7 @@ internal static class RuntimeModModeCoordinator
             ModelDbCleanup.InvalidateListCaches();
             ModManagerReflection.InvalidateHarmonyCache();
             if (mod.state == ModLoadState.Loaded)
-                Sts2UiRefreshInterop.AfterModListChanged();
+                Sts2UiRefreshInterop.ScheduleAfterModListChanged();
         }
     }
 
@@ -208,7 +208,7 @@ internal static class RuntimeModModeCoordinator
                 reason: "EnableAllContentMods",
                 refreshIfAlreadyLoaded: false);
 
-        Sts2UiRefreshInterop.AfterModListChanged();
+        Sts2UiRefreshInterop.ScheduleAfterModListChanged();
     }
 
     private static bool IsSelf(Mod mod) =>

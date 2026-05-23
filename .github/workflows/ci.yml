@@ -15,7 +15,7 @@ jobs:
         with:
           dotnet-version: "9.0.x"
       - name: Build ModHotReload.Core
-        run: dotnet build ModHotReload.Core/ModHotReload.Core.csproj -c Release --no-restore false
+        run: dotnet build ModHotReload.Core/ModHotReload.Core.csproj -c Release
       - name: Build ModHotReload.StartupHook
         run: dotnet build ModHotReload.StartupHook/ModHotReload.StartupHook.csproj -c Release
 

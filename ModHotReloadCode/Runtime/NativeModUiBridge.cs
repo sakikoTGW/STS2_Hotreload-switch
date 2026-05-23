@@ -35,7 +35,6 @@ internal static class NativeModUiBridge
         {
             ModLifecycleCoordinator.ApplyEnabledState(mod, enabled, persistSettings: true, reason: "勾选");
             HidePendingRestartWarning(GetScreenFromRow(row) ?? FindModdingScreen());
-            Sts2UiRefreshInterop.AfterModListChanged();
         }
         finally
         {
@@ -55,7 +54,7 @@ internal static class NativeModUiBridge
 
             HidePendingRestartWarning(screen);
             BaseLibInterop.TryRefreshMainMenuInjection();
-            Sts2UiRefreshInterop.AfterModListChanged();
+            Sts2UiRefreshInterop.ScheduleAfterModListChanged();
             MainFile.Logger.Info("[热重载] 原生模组界面：已应用勾选状态（无需重启）。");
         }
         catch (Exception ex)

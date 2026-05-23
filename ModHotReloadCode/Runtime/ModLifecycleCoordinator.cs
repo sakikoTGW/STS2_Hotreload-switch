@@ -69,7 +69,7 @@ internal static class ModLifecycleCoordinator
             MainFile.Logger.Info($"[热重载] {modId} 已 Loaded，{reason} 触发磁盘刷新…");
             HotReloadCoordinator.Reload(mod, ReloadChangeKind.DllOrJson, force: true);
             BaseLibInterop.TryRefreshMainMenuInjection();
-            Sts2UiRefreshInterop.AfterModListChanged();
+            Sts2UiRefreshInterop.ScheduleAfterModListChanged();
             return;
         }
 
@@ -82,7 +82,7 @@ internal static class ModLifecycleCoordinator
         PrepareForLoad(modId);
         RuntimeModModeCoordinator.EnableMod(mod, persistSettings: false);
         BaseLibInterop.TryRefreshMainMenuInjection();
-        Sts2UiRefreshInterop.AfterModListChanged();
+        Sts2UiRefreshInterop.ScheduleAfterModListChanged();
     }
 
     private static void ApplyDisable(Mod mod, string modId, string reason)
