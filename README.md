@@ -12,7 +12,7 @@ Slay the Spire 2 通用模组热重载（ModHotReload）。仓库：[github.com/
 
 ## 快速安装（玩家）
 
-1. 从 [Releases](https://github.com/sakikoTGW/STS2_Hotreload-switch/releases) 下载构建产物，或自行编译（见下）。
+1. 从 [Releases](https://github.com/sakikoTGW/STS2_Hotreload-switch/releases/latest) 下载 **ModHotReload-v1.6.6.zip**（或更新版本），或自行编译（见下）。
 2. 将整个 `ModHotReload` 文件夹复制到游戏的 `mods/ModHotReload/`。
 3. 双击仓库根目录的 **`Install.bat`**（或运行 `scripts/install.ps1`），会编译、部署并写入 `sts2.runtimeconfig.json` 的 **startupHooks**。
 4. 用 **Steam 正常启动**游戏（无需改启动项），在模组列表启用 **Mod Hot Reload**。
