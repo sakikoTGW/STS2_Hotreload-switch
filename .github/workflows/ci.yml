@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build-core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+      - name: Build ModHotReload.Core
+        run: dotnet build ModHotReload.Core/ModHotReload.Core.csproj -c Release --no-restore false
+      - name: Build ModHotReload.StartupHook
+        run: dotnet build ModHotReload.StartupHook/ModHotReload.StartupHook.csproj -c Release
+
+  # Full mod build needs a local STS2 install; run scripts/verify-build.ps1 on your machine.
+  verify-tool:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+      - name: Compile verify tool (no game DLLs at compile time)
+        run: dotnet build tools/ModHotReloadVerify/ModHotReloadVerify.csproj -c Release

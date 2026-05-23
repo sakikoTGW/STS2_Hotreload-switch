@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copy to local.props (gitignored) and adjust paths for your machine.
+  Or set environment variable STS2_PATH to the game install folder.
+-->
+<Project>
+  <PropertyGroup>
+    <!-- Game root (folder containing SlayTheSpire2.exe) -->
+    <Sts2Path Condition="'$(Sts2Path)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Slay the Spire 2</Sts2Path>
+
+    <!-- Optional: Godot 4.5 mono for exporting ModHotReload.pck -->
+    <!-- <GodotPath>C:\Path\To\Godot_v4.5.1-stable_mono_win64.exe</GodotPath> -->
+
+    <!-- Set false in CI or when you only want artifacts under bin/ -->
+    <!-- <DeployToGame>false</DeployToGame> -->
+  </PropertyGroup>
+</Project>

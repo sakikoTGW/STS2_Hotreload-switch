@@ -1,0 +1,35 @@
+# Build
+**/bin/
+**/obj/
+.godot/
+*.user
+*.suo
+.vs/
+
+# Local overrides (copy from local.props.example)
+local.props
+Directory.Build.props.user
+
+# Deploy / pending
+*.pending
+ModHotReload.dll.pending
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Logs & test artifacts
+*.log
+run-itest.flag
+itest-results.json
+staging/
+
+# Steam backup
+sts2.runtimeconfig.json.bak
+
+# IDE
+.idea/
+*.swp
+
+# Local dev probes (optional; needs STS2 refs)
+_probe/

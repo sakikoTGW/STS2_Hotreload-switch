@@ -1,0 +1,80 @@
+<Project Sdk="Godot.NET.Sdk/4.5.1" InitialTargets="CheckDependencyPaths">
+    <Import Project=".\Sts2PathDiscovery.props"/>
+    <PropertyGroup>
+        <DeployToGame Condition="'$(DeployToGame)' == ''">true</DeployToGame>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>ModHotReload</RootNamespace>
+        <GodotDisabledSourceGenerators>GodotPluginsInitializer</GodotDisabledSourceGenerators>
+        <NoWarn>$(NoWarn);MSB3270</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="ModHotReload.Core\ModHotReload.Core.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup Condition="Exists('$(Sts2DataDir)')">
+        <Reference Include="0Harmony">
+            <HintPath>$(Sts2DataDir)/0Harmony.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="sts2">
+            <HintPath>$(Sts2DataDir)/sts2.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Remove="ModHotReload/**"/>
+        <Compile Remove="ModHotReload.Core/**"/>
+        <Compile Remove="ModHotReload.StartupHook/**"/>
+        <Compile Remove="_probe/**"/>
+        <None Include="ModHotReload/**"/>
+        <None Include="ModHotReload.Core/**"/>
+        <None Include="ModHotReload.StartupHook/**"/>
+        <None Include="ModHotReload.json"/>
+        <None Include="project.godot"/>
+    </ItemGroup>
+
+    <Target Name="CheckDependencyPaths" BeforeTargets="Build"
+            Condition="'$(SkipSts2Check)' != 'true'">
+        <Error Text="Slay the Spire 2 not found. Set Sts2Path in local.props (see local.props.example) or env STS2_PATH. Build with -p:SkipSts2Check=true only if you know what you are doing."
+               Condition="'$(Sts2DataDir)' == '' or !Exists('$(Sts2DataDir)')"/>
+    </Target>
+
+    <Target Name="CopyToModsFolderOnBuild" AfterTargets="Build"
+            Condition="'$(DeployToGame)' == 'true' and '$(ModsPath)' != ''">
+        <PropertyGroup>
+            <_CoreDll>$(TargetDir)ModHotReload.Core.dll</_CoreDll>
+            <_CoreDllFallback>$(MSBuildProjectDirectory)\ModHotReload.Core\bin\$(Configuration)\net9.0\ModHotReload.Core.dll</_CoreDllFallback>
+        </PropertyGroup>
+        <Error Text="ModHotReload.Core.dll 未生成，无法部署。请先 dotnet build ModHotReload.Core.csproj"
+               Condition="!Exists('$(_CoreDll)') and !Exists('$(_CoreDllFallback)')"/>
+        <Message Text="Deploy ModHotReload to $(ModsPath)ModHotReload/" Importance="high"/>
+        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ModsPath)ModHotReload/" ContinueOnError="WarnAndContinue"/>
+        <Copy SourceFiles="$(TargetPath)" DestinationFiles="$(ModsPath)ModHotReload/ModHotReload.dll.pending" ContinueOnError="true"/>
+        <Copy SourceFiles="ModHotReload.json" DestinationFolder="$(ModsPath)ModHotReload/"/>
+        <Copy SourceFiles="scripts/sts2-launch.cmd" DestinationFolder="$(ModsPath)ModHotReload/"/>
+        <Copy SourceFiles="Install.bat" DestinationFolder="$(ModsPath)ModHotReload/"/>
+        <Copy SourceFiles="$(TargetDir)$(TargetName).pdb" DestinationFolder="$(ModsPath)ModHotReload/" Condition="Exists('$(TargetDir)$(TargetName).pdb')" ContinueOnError="true"/>
+        <Copy SourceFiles="$(_CoreDll)" DestinationFolder="$(ModsPath)ModHotReload/" Condition="Exists('$(_CoreDll)')"/>
+        <Copy SourceFiles="$(_CoreDllFallback)" DestinationFolder="$(ModsPath)ModHotReload/" Condition="!Exists('$(_CoreDll)') and Exists('$(_CoreDllFallback)')"/>
+        <Copy SourceFiles="$(TargetDir)ModHotReload.Core.pdb" DestinationFolder="$(ModsPath)ModHotReload/" Condition="Exists('$(TargetDir)ModHotReload.Core.pdb')" ContinueOnError="true"/>
+        <Copy SourceFiles="$(MSBuildProjectDirectory)\ModHotReload.Core\bin\$(Configuration)\net9.0\ModHotReload.Core.pdb" DestinationFolder="$(ModsPath)ModHotReload/" Condition="!Exists('$(TargetDir)ModHotReload.Core.pdb') and Exists('$(MSBuildProjectDirectory)\ModHotReload.Core\bin\$(Configuration)\net9.0\ModHotReload.Core.pdb')" ContinueOnError="true"/>
+        <MSBuild Projects="$(MSBuildProjectDirectory)\ModHotReload.StartupHook\ModHotReload.StartupHook.csproj" Targets="Build" Properties="Configuration=$(Configuration)"/>
+        <Copy SourceFiles="$(MSBuildProjectDirectory)\ModHotReload.StartupHook\bin\$(Configuration)\net9.0\ModHotReload.StartupHook.dll" DestinationFolder="$(ModsPath)ModHotReload/" ContinueOnError="true"/>
+        <Copy SourceFiles="$(MSBuildProjectDirectory)\ModHotReload.StartupHook\bin\$(Configuration)\net9.0\ModHotReload.StartupHook.dll" DestinationFolder="$(TargetDir)" ContinueOnError="true"/>
+        <Message Text="若游戏占用了 DLL，退出后执行: scripts/apply-pending.ps1" Importance="high" Condition="Exists('$(ModsPath)ModHotReload/ModHotReload.dll.pending')"/>
+        <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)/scripts/patch-runtimeconfig.ps1&quot; -Sts2Path &quot;$(Sts2Path)&quot;"
+              Condition="Exists('$(ModsPath)ModHotReload/ModHotReload.Core.dll')"
+              ContinueOnError="WarnAndContinue"/>
+    </Target>
+
+    <Target Name="GodotExportPck" AfterTargets="CopyToModsFolderOnBuild"
+            Condition="'$(GodotPath)' != '' and Exists('$(GodotPath)')">
+        <Exec Command="&quot;$(GodotPath)&quot; --headless --path &quot;$(MSBuildProjectDirectory)&quot; --export-pack &quot;BasicExport&quot; &quot;$(ModsPath)ModHotReload/ModHotReload.pck&quot;"
+              EnvironmentVariables="IsInnerGodotExport=true"
+              ContinueOnError="WarnAndContinue"/>
+    </Target>
+</Project>
