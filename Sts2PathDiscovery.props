@@ -21,6 +21,8 @@
 
         <Sts2Path Condition="'$(Sts2Path)' == '' and Exists('$(SteamLibraryPath)/common/Slay the Spire 2')">$(SteamLibraryPath)/common/Slay the Spire 2</Sts2Path>
         <Sts2Path Condition="'$(Sts2Path)' == '' and Exists('$(RegistrySts2Path)/data_sts2_windows_x86_64')">$(RegistrySts2Path)</Sts2Path>
+        <Sts2Path Condition="'$(Sts2Path)' == '' and Exists('D:/SteamLibrary/steamapps/common/Slay the Spire 2')">D:/SteamLibrary/steamapps/common/Slay the Spire 2</Sts2Path>
+        <Sts2Path Condition="'$(Sts2Path)' == '' and Exists('E:/SteamLibrary/steamapps/common/Slay the Spire 2')">E:/SteamLibrary/steamapps/common/Slay the Spire 2</Sts2Path>
         <Sts2Path Condition="'$(Sts2Path)' == ''">$(SteamLibraryPath)/common/Slay the Spire 2</Sts2Path>
         
         <ModsPath>$(Sts2Path)/mods/</ModsPath>

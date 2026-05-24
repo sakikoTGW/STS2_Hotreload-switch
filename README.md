@@ -12,7 +12,7 @@ Slay the Spire 2 通用模组热重载（ModHotReload）。仓库：[github.com/
 
 ## 快速安装（玩家）
 
-1. 从 [Releases](https://github.com/sakikoTGW/STS2_Hotreload-switch/releases/latest) 下载 **ModHotReload-v1.6.6.zip**（或更新版本），或自行编译（见下）。
+1. 从 [Releases](https://github.com/sakikoTGW/STS2_Hotreload-switch/releases/latest) 下载 **ModHotReload-v1.7.0.zip**（或更新版本），或自行编译（见下）。
 2. 将整个 `ModHotReload` 文件夹复制到游戏的 `mods/ModHotReload/`。
 3. 双击仓库根目录的 **`Install.bat`**（或运行 `scripts/install.ps1`），会编译、部署并写入 `sts2.runtimeconfig.json` 的 **startupHooks**。
 4. 用 **Steam 正常启动**游戏（无需改启动项），在模组列表启用 **Mod Hot Reload**。
@@ -80,18 +80,29 @@ scripts/                      # 安装、部署、集成测试
 
 日志：游戏内 `` ` `` 控制台，或 `%APPDATA%\SlayTheSpire2\logs\godot.log`（搜 `[热重载]`、`[ITEST]`）。
 
-## 限制
-
 ## 兼容性 / 排错
 
 | 现象 | 原因与处理 |
 |------|------------|
 | 勾选模组时刷屏 `reloadall`、Manosaba `duplicate key` | v1.6.6 及更早会在每次勾选时全量对齐 settings；请升到 **v1.6.7+** |
+| BaseLib 一改就全 mod 重载、duplicate key | v1.7.0 默认 **不** 自动 reloadall；在 `config.json` 设 `cascadeReloadAllOnBaseLib: true` 可恢复旧行为 |
+| `mods/BaseLib.pck` 在根目录、子目录无 PCK | v1.7.0+ 支持扁平 `mods/{id}.pck` 布局 |
 | `[BetterModMenu] MissingMethodException … LoadedMods()` | BetterModMenu 与当前游戏版本不匹配；**更新或暂时禁用** BetterModMenu |
 | 日志里 `ModHotReload, Version=1.0.0.0` | 未装全三个 DLL 或仍是旧 zip；用 Release 包并确认含 Core + StartupHook |
 | `DevConsole 注册失败` | 无害；进主菜单后会再注册 |
 
 安装包须含：`ModHotReload.dll`、`ModHotReload.Core.dll`、`ModHotReload.StartupHook.dll`、`ModHotReload.pck`。首次安装运行 `Install.bat` 后**完全退出再进游戏**一次。
+
+### 与其它 GitHub mod 的兼容矩阵（概要）
+
+| 类型 | 热重载支持度 | 说明 |
+|------|-------------|------|
+| 官方 `ModManager` + `manifest.json` | 高 | 标准 `mods/{id}/{id}.dll` 或扁平 PCK |
+| BaseLib 内容 mod | 高（DLL/PCK） | 默认不再自动 `reloadall`；依赖方可用 `cascadeDependentsOnReload` |
+| 仅 Harmony、无卸载钩子 | 中 | 重载会 `UnpatchAll` 再加载；与其它 mod 补丁顺序可能冲突 |
+| 强依赖 Default ALC 的旧 DLL | 低 | 首次进 Default 后需**重启游戏** |
+| 菜单/UI 仅 PCK | 高 | PCK 变更会按依赖顺序**重挂全部**已加载 PCK |
+| 自研菜单 patch（BetterModMenu 等） | 视游戏版本 | API 不匹配时与热重载无关，需更新该 mod |
 
 ## 限制
 
@@ -99,7 +110,7 @@ scripts/                      # 安装、部署、集成测试
 - **战斗中改 DLL**：默认走 SL 管道（保存 → 主菜单 → 重载 → 继续），非边打边换。
 - 已进入 Default ALC 的依赖需重启；Watcher 有 ~1.5s 节流合并。
 
-## 切档 / 模式切换（v1.6.9+）
+## 切档 / 模式切换（v1.6.9+，持续维护至 v1.7.0）
 
 `modmode on|off` 或 Vanilla/Modded 存档切换时会：
 
@@ -125,6 +136,8 @@ Harmony 与其它 mod：关键 UI/加载补丁优先打；冲突时请更新 Bet
 | `minReloadIntervalSeconds` | 同一 mod 最短重载间隔 |
 | `maxReloadRetries` | 单 mod 失败最大自动重试次数 |
 | `retryBackoffSeconds` | 重试退避间隔 |
+| `cascadeReloadAllOnBaseLib` | BaseLib 成功后是否 `reloadall`（默认 **false**，v1.7.0+） |
+| `cascadeDependentsOnReload` | 是否级联重载 manifest 依赖方（默认 true） |
 
 控制台：`hotreload on` / `hotreload off` / `hotreload status` / `hotreload reload-config`
 

@@ -6,5 +6,7 @@
   "minReloadIntervalSeconds": 1.5,
   "maxReloadRetries": 3,
   "retryBackoffSeconds": 4.0,
-  "duplicateEventWindowMs": 900
+  "duplicateEventWindowMs": 900,
+  "cascadeReloadAllOnBaseLib": false,
+  "cascadeDependentsOnReload": true
 }

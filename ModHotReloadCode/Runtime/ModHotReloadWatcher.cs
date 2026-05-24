@@ -172,7 +172,19 @@ public partial class ModHotReloadWatcher : Node
         {
             string relative = Path.GetRelativePath(_modsRoot, fullPath);
             string[] parts = relative.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            return parts.Length >= 2 ? parts[0] : null;
+            if (parts.Length >= 2)
+                return parts[0];
+
+            // mods/BaseLib.pck 等扁平布局
+            if (parts.Length == 1)
+            {
+                string file = parts[0];
+                string ext = Path.GetExtension(file);
+                if (WatchedExtensions.Contains(ext))
+                    return Path.GetFileNameWithoutExtension(file);
+            }
+
+            return null;
         }
         catch
         {
@@ -188,8 +200,8 @@ public partial class ModHotReloadWatcher : Node
             if (id == null || string.IsNullOrEmpty(mod.path))
                 continue;
 
-            string dll = Path.Combine(mod.path, id + ".dll");
-            if (File.Exists(dll))
+            string? dll = ModPayloadPaths.ResolveFirstExisting(mod, id + ".dll");
+            if (dll != null)
                 HotReloadCoordinator.SeedDllTimestamp(id, File.GetLastWriteTimeUtc(dll).Ticks);
         }
     }

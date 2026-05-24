@@ -22,10 +22,12 @@ internal static class GodotResourceInterop
         {
             Mod? mod = ModManager.Mods.FirstOrDefault(m =>
                 string.Equals(m.manifest?.id, modId, StringComparison.OrdinalIgnoreCase));
-            if (mod?.manifest?.hasPck != true || mod.state != ModLoadState.Loaded)
+            if (mod == null || mod.state != ModLoadState.Loaded)
                 continue;
 
             string? pckPath = ModStagingStore.ResolvePayloadPath(mod, modId + ".pck", preferLive: true);
+            if (pckPath == null && mod.manifest?.hasPck != true)
+                continue;
             if (pckPath == null || !File.Exists(pckPath))
                 continue;
 

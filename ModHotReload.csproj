@@ -6,10 +6,10 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RootNamespace>ModHotReload</RootNamespace>
-        <Version>1.6.9</Version>
-        <AssemblyVersion>1.6.9.0</AssemblyVersion>
-        <FileVersion>1.6.9.0</FileVersion>
-        <InformationalVersion>1.6.9</InformationalVersion>
+        <Version>1.7.0</Version>
+        <AssemblyVersion>1.7.0.0</AssemblyVersion>
+        <FileVersion>1.7.0.0</FileVersion>
+        <InformationalVersion>1.7.0</InformationalVersion>
         <GodotDisabledSourceGenerators>GodotPluginsInitializer</GodotDisabledSourceGenerators>
         <NoWarn>$(NoWarn);MSB3270</NoWarn>
     </PropertyGroup>

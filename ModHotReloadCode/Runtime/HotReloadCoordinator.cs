@@ -68,8 +68,8 @@ internal static class HotReloadCoordinator
         string[] names = [modId + ".dll", modId + ".pck", modId + ".json"];
         foreach (string name in names)
         {
-            string live = Path.Combine(mod.path, name);
-            if (File.Exists(live))
+            string? live = ModPayloadPaths.ResolveFirstExisting(mod, name);
+            if (live != null)
                 ModStagingStore.SyncFileFromLive(modId, live);
         }
     }
@@ -213,6 +213,7 @@ internal static class HotReloadCoordinator
         bool success = false;
         try
         {
+            ModCompatibilityHints.LogOnce(mod);
             MainFile.Logger.Info($"[热重载] >>> {mod.manifest?.name ?? modId} ({modId}) kind={kind} root={ModStagingStore.GetEffectiveModRoot(mod)}");
 
             if (kind == ReloadChangeKind.PckOnly)
@@ -239,12 +240,19 @@ internal static class HotReloadCoordinator
             if (success && kind != ReloadChangeKind.PckOnly && GameSafetyGuard.IsInCombat)
                 CombatReloadInterop.AfterModReloadInCombat(mod);
 
-            if (success && string.Equals(modId, "BaseLib", StringComparison.OrdinalIgnoreCase) && !_reloadAllInProgress)
+            var settings = ModHotReloadSettings.Current;
+            if (success
+                && settings.CascadeReloadAllOnBaseLib
+                && string.Equals(modId, "BaseLib", StringComparison.OrdinalIgnoreCase)
+                && !_reloadAllInProgress)
             {
-                MainFile.Logger.Info("[热重载] BaseLib 更新 → reloadall");
+                MainFile.Logger.Info("[热重载] BaseLib 更新 → reloadall（cascadeReloadAllOnBaseLib=true）");
                 ReloadAllLoadedMods();
             }
-            else if (success && !_reloadAllInProgress && mod.state == ModLoadState.Loaded)
+            else if (success
+                     && settings.CascadeDependentsOnReload
+                     && !_reloadAllInProgress
+                     && mod.state == ModLoadState.Loaded)
             {
                 ModDependencyCascade.ReloadDependents(modId, force);
             }

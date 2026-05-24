@@ -67,9 +67,9 @@ internal static class ModStagingStore
             return null;
 
         string staging = Path.Combine(GetStagingModDir(modId), fileName);
-        string live = Path.Combine(mod.path, fileName);
+        string? live = ModPayloadPaths.ResolveFirstExisting(mod, fileName);
         bool hasStaging = File.Exists(staging);
-        bool hasLive = File.Exists(live);
+        bool hasLive = live != null;
 
         if (hasLive && !hasStaging)
             return live;
@@ -78,8 +78,8 @@ internal static class ModStagingStore
         if (hasStaging && hasLive)
         {
             if (preferLive)
-                return File.GetLastWriteTimeUtc(live) >= File.GetLastWriteTimeUtc(staging) ? live : staging;
-            return File.GetLastWriteTimeUtc(staging) >= File.GetLastWriteTimeUtc(live) ? staging : live;
+                return File.GetLastWriteTimeUtc(live!) >= File.GetLastWriteTimeUtc(staging) ? live : staging;
+            return File.GetLastWriteTimeUtc(staging) >= File.GetLastWriteTimeUtc(live!) ? staging : live;
         }
 
         return null;

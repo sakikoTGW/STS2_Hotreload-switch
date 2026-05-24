@@ -38,6 +38,14 @@ internal sealed class ModHotReloadSettings
     [JsonPropertyName("duplicateEventWindowMs")]
     public double DuplicateEventWindowMs { get; set; } = 900;
 
+    /// <summary>BaseLib 热重载成功后是否自动 reloadall（默认 false，避免误伤大量依赖 mod）。</summary>
+    [JsonPropertyName("cascadeReloadAllOnBaseLib")]
+    public bool CascadeReloadAllOnBaseLib { get; set; }
+
+    /// <summary>任意 mod 重载成功后是否级联重载 manifest.dependencies 中的已加载 mod。</summary>
+    [JsonPropertyName("cascadeDependentsOnReload")]
+    public bool CascadeDependentsOnReload { get; set; } = true;
+
     internal static string ConfigPath => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "STS2_ModHotReload",
@@ -112,5 +120,6 @@ internal sealed class ModHotReloadSettings
     internal string Describe() =>
         $"hotReload={HotReloadEnabled} watch={FileWatchEnabled} debounce={DebounceSeconds}s " +
         $"interval={MinReloadIntervalSeconds}s retries={MaxReloadRetries} backoff={RetryBackoffSeconds}s " +
+        $"cascadeBaseLibAll={CascadeReloadAllOnBaseLib} cascadeDeps={CascadeDependentsOnReload} " +
         $"schema={SchemaVersion}";
 }
