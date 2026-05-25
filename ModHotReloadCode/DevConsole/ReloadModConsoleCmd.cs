@@ -67,17 +67,17 @@ internal sealed class ModModeConsoleCmd : AbstractConsoleCmd
                 return new CmdResult(true, RuntimeModModeCoordinator.Status);
             case "on":
             case "modded":
-                _ = RuntimeModModeCoordinator.SwitchAsync(RuntimeModMode.Modded, continueAfterSwitch: false);
+                RuntimeModModeCoordinator.RequestSwitch(RuntimeModMode.Modded);
                 return new CmdResult(true, "正在切换到 Mod 模式；若当前在 Run 中会先保存并回主菜单。");
             case "off":
             case "vanilla":
-                _ = RuntimeModModeCoordinator.SwitchAsync(RuntimeModMode.Vanilla, continueAfterSwitch: false);
+                RuntimeModModeCoordinator.RequestSwitch(RuntimeModMode.Vanilla);
                 return new CmdResult(true, "正在切换到无 Mod 模式；若当前在 Run 中会先保存并回主菜单。");
             case "toggle":
                 RuntimeModMode target = RuntimeModModeCoordinator.IsVanillaMode
                     ? RuntimeModMode.Modded
                     : RuntimeModMode.Vanilla;
-                _ = RuntimeModModeCoordinator.SwitchAsync(target, continueAfterSwitch: false);
+                RuntimeModModeCoordinator.RequestSwitch(target);
                 return new CmdResult(true, $"正在切换到 {target} 模式。");
             default:
                 return new CmdResult(false, "用法: modmode on|off|toggle|status");

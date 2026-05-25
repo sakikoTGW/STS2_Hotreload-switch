@@ -22,6 +22,8 @@ internal static class HarmonyInstaller
         typeof(ModManagerIsRunningModdedPatch),
         typeof(ModManagerGameplayRelevantPatch),
         typeof(ModManagerHasHarmonyPatchesPatch),
+        typeof(SaveManagerGetProfileScopedPathPatch),
+        typeof(SaveManagerSwitchProfileIdPatch),
     ];
 
     private static readonly Type[] OptionalPatchTypes =

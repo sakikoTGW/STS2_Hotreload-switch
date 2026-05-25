@@ -31,7 +31,28 @@ internal static class RuntimeModModeCoordinator
     internal static void ApplyStartupMode()
     {
         if (IsVanillaMode)
+        {
             DisableAllContentMods(persistSettings: true);
+            SaveProfileInterop.RebindCurrentProfile();
+        }
+    }
+
+    /// <summary>在 Godot 主线程调度模式切换（控制台/异步回调必须走此入口）。</summary>
+    internal static void RequestSwitch(RuntimeModMode target, bool continueAfterSwitch = false)
+    {
+        if (Engine.GetMainLoop() is not SceneTree tree)
+        {
+            _ = SwitchAsync(target, continueAfterSwitch);
+            return;
+        }
+
+        void OnFrame()
+        {
+            tree.ProcessFrame -= OnFrame;
+            _ = SwitchAsync(target, continueAfterSwitch);
+        }
+
+        tree.ProcessFrame += OnFrame;
     }
 
     /// <summary>由原生模组界面同步 Modded/Vanilla 存档根（不写 runtime-mode.txt）。</summary>
@@ -73,6 +94,7 @@ internal static class RuntimeModModeCoordinator
             }
 
             Sts2UiRefreshInterop.ScheduleAfterModListChanged();
+            SaveProfileInterop.RebindCurrentProfile();
         }
         catch (Exception ex)
         {
@@ -116,6 +138,7 @@ internal static class RuntimeModModeCoordinator
                 EnableAllContentMods(persistSettings: true);
 
             RefreshMainMenu();
+            SaveProfileInterop.RebindCurrentProfile();
 
             if (continueAfterSwitch && SaveManager.Instance.HasRunSave)
             {

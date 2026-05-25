@@ -85,6 +85,7 @@ scripts/                      # 安装、部署、集成测试
 | 现象 | 原因与处理 |
 |------|------------|
 | 勾选模组时刷屏 `reloadall`、Manosaba `duplicate key` | v1.6.6 及更早会在每次勾选时全量对齐 settings；请升到 **v1.6.7+** |
+| `modmode off` 后仍进 modded 存档 / 无 vanilla 继续 | 升到 **v1.7.1+**；执行 `modmode off` 后看日志 `存档路径已按 Vanilla 重绑`，再回主菜单继续 |
 | BaseLib 一改就全 mod 重载、duplicate key | v1.7.0 默认 **不** 自动 reloadall；在 `config.json` 设 `cascadeReloadAllOnBaseLib: true` 可恢复旧行为 |
 | `mods/BaseLib.pck` 在根目录、子目录无 PCK | v1.7.0+ 支持扁平 `mods/{id}.pck` 布局 |
 | `[BetterModMenu] MissingMethodException … LoadedMods()` | BetterModMenu 与当前游戏版本不匹配；**更新或暂时禁用** BetterModMenu |
@@ -112,7 +113,11 @@ scripts/                      # 安装、部署、集成测试
 
 ## 切档 / 模式切换（v1.6.9+，持续维护至 v1.7.0）
 
-`modmode on|off` 或 Vanilla/Modded 存档切换时会：
+`modmode on|off` 会卸载/重载内容 mod，并 **重新绑定** 存档根（`profile1` ↔ `modded/profile1`）。切换后看日志应有 `存档路径已按 Vanilla/Modded 重绑`。
+
+`modmode off` 后请从主菜单 **继续** 或 **选角开新局**（不要仍在 modded 路径下的旧 Continue 缓存里点）。
+
+切档 / 模式切换时还会：
 
 1. **等待** pending 重载队列与进行中的 reload 收尾（`WaitForQuiescence`）
 2. **快照** 当前已加载 mod 列表 → `%LOCALAPPDATA%\STS2_ModHotReload\switch-snapshot.json`

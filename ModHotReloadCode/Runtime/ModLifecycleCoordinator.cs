@@ -22,6 +22,13 @@ internal static class ModLifecycleCoordinator
         if (string.IsNullOrEmpty(modId))
             return;
 
+        if (enabled && RuntimeModModeCoordinator.IsVanillaMode)
+        {
+            MainFile.Logger.Warn(
+                $"[热重载] 当前为无 Mod 模式，无法启用 {modId}。请先执行 modmode on。");
+            return;
+        }
+
         bool settingsWasDisabled = ModManagerReflection.IsModDisabled(modId, mod.modSource);
 
         if (persistSettings)

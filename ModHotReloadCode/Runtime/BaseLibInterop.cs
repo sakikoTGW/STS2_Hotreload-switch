@@ -151,16 +151,15 @@ internal static class BaseLibInterop
                 break;
             case "on":
             case "modded":
-                _ = RuntimeModModeCoordinator.SwitchAsync(RuntimeModMode.Modded, continueAfterSwitch: false);
+                RuntimeModModeCoordinator.RequestSwitch(RuntimeModMode.Modded);
                 break;
             case "off":
             case "vanilla":
-                _ = RuntimeModModeCoordinator.SwitchAsync(RuntimeModMode.Vanilla, continueAfterSwitch: false);
+                RuntimeModModeCoordinator.RequestSwitch(RuntimeModMode.Vanilla);
                 break;
             case "toggle":
-                _ = RuntimeModModeCoordinator.SwitchAsync(
-                    RuntimeModModeCoordinator.IsVanillaMode ? RuntimeModMode.Modded : RuntimeModMode.Vanilla,
-                    continueAfterSwitch: false);
+                RuntimeModModeCoordinator.RequestSwitch(
+                    RuntimeModModeCoordinator.IsVanillaMode ? RuntimeModMode.Modded : RuntimeModMode.Vanilla);
                 break;
             default:
                 MainFile.Logger.Info("[热重载] modmode on|off|toggle|status");
