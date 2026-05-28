@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using Godot;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Saves;
@@ -133,9 +133,17 @@ internal static class RuntimeModModeCoordinator
             PersistMode(target);
 
             if (target == RuntimeModMode.Vanilla)
+            {
                 DisableAllContentMods(persistSettings: true);
+                // 切到 vanilla 后清理残留缓存，避免选角仍拿到已失效的 mod 资源引用。
+                GodotResourceInterop.ClearResourceCache();
+            }
             else
+            {
                 EnableAllContentMods(persistSettings: true);
+                // Mod 模式切回后强制按依赖顺序重挂全部 PCK，修复 char_select_* 资源漏挂。
+                GodotResourceInterop.RemountAllLoadedPcks();
+            }
 
             RefreshMainMenu();
             SaveProfileInterop.RebindCurrentProfile();
@@ -274,6 +282,7 @@ internal static class RuntimeModModeCoordinator
         if (IsVanillaMode)
         {
             DisableAllContentMods(persistSettings: false);
+            GodotResourceInterop.ClearResourceCache();
             return;
         }
 
@@ -299,6 +308,7 @@ internal static class RuntimeModModeCoordinator
             }
         }
 
+        GodotResourceInterop.RemountAllLoadedPcks();
         Sts2UiRefreshInterop.ScheduleAfterModListChanged();
     }
 
@@ -319,6 +329,7 @@ internal static class RuntimeModModeCoordinator
                 reason: "EnableAllContentMods",
                 refreshIfAlreadyLoaded: false);
 
+        GodotResourceInterop.RemountAllLoadedPcks();
         Sts2UiRefreshInterop.ScheduleAfterModListChanged();
     }
 
